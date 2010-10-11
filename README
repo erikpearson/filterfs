@@ -1,0 +1,74 @@
+========
+FilterFS
+========
+
+:Author: Gregor Zurowski <gregor.zurowski@lunetta.net>
+:Author: Kristofer Henriksson <kthenriksson@gmail.com>
+:Web Site: http://filterfs.sourceforge.net
+
+Introduction
+------------
+
+FilterFS (Filter File System) is a FUSE-based virtual filesystem that allows filtering existing filesystems. Filters consist of include/exclude rules which are stored in a filter chain, similar to the way how iptables stores ip filtering rules for network packets. The virtual filesystem can be accessed through a specified mount point where all files are included and excluded according to the rules found in the filter chain. Rules can be provided with command line parameters or options in the system's fstab file.
+
+FilterFS can be useful in various scenarios where parts of the filesystem needs to be hidden from a user or where filtering files simplifies certain use cases. For example, it can be used to export only certain audio files of a filesystem where additional metadata such as pictures or playlists are stored next to the audio files. This makes it easier to copy whole subtrees with audio files to an MP3 player without filling the player's flash memory with unncessary metadata. In a more enterprise-centric environment, it would be possible to export filtered network shares which only allow storage of specific document types based on predefined file extensions.
+
+Usage
+-----
+
+Include and exclude filters are specified on the command line or alternatively in the system's fstab file with the following parameters:
+
+  -I <pattern> OR --include=<pattern>
+
+  -X <pattern> OR --exclude=<pattern>
+
+It is possible to specify multiple rules at once by separating patterns with colons:
+
+  -I <pattern:pattern:...> OR --include=<pattern:pattern:...>
+
+  -X <pattern:pattern:...> OR --exclude=<pattern:pattern:...>
+
+The default action for a filterfs filesystem is to exclude all files that cannot be matched by any rule. It is also possible to override this default behaviour and including all unmatched files with the following parameter:
+
+  --default-include
+
+The order they are provided on the command line is the ordered how they are added to the filter chain.
+
+The following example shows how to create a filtered filesystem that only allows audio files and playlists::
+
+  filterfs /data/audio /data/filtered-audio --include=*.flac:*.mp3:*.m3u:*.m3u8
+
+The following is a more complete example that implements an advanced chain of include and exclude rules::
+
+  filterfs /data/audio /data/filtered-audio --exclude=temporary*.log:*.cue 
+  --include=*.log --include=*.flac:*.mp3 --default-include
+
+It is also possible to mount FilterFS filesystems with the system's fstab file. This would require an additional entry in /etc/fstab such as the following::
+
+  #filterfs#/mnt/audio /mnt/filtered-audio fuse allow_other
+  ,exclude=temporary*.log:*.cue,include=*.log:*.flac:*.mp3,default-include  0  0
+
+Note that mounting FilterFS filesystems with the fstab file requires the /sbin/mount.fuse utility from the fuse-utils package.
+
+Download
+--------
+
+All releases are available through the project's SourceForge files page:
+
+  http://sourceforge.net/projects/filterfs/files
+
+Development
+-----------
+
+The FilterFS project uses Git for revision control. You can obtain the full repository with::
+
+  git clone git://filterfs.git.sourceforge.net/gitroot/filterfs
+
+FilterFS is written in plain C and does not use any third-party libraries except FUSE:
+
+- `FUSE <http://fuse.sourceforge.net/>`_ (>= 2.6.0)
+
+License
+-------
+
+This program can be distributed under the terms of the GNU GPL version 3 or later. You can find it `online <http://www.gnu.org/licenses/gpl-3.0.html>`_ or in the FilterFS distribution in the COPYING file.

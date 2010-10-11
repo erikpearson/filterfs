@@ -1,0 +1,8 @@
+Installation
+============
+
+To build and install, run:
+
+./configure
+make
+make install
