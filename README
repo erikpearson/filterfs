@@ -9,41 +9,39 @@ FilterFS
 Introduction
 ------------
 
-FilterFS (Filter File System) is a FUSE-based virtual filesystem that allows filtering existing filesystems. Filters consist of include/exclude rules which are stored in a filter chain, similar to the way how iptables stores ip filtering rules for network packets. The virtual filesystem can be accessed through a specified mount point where all files are included and excluded according to the rules found in the filter chain. Rules can be provided with command line parameters or options in the system's fstab file.
+FilterFS (Filter File System) is a FUSE-based virtual filesystem that allows filtering existing filesystems. Filters consist of include/exclude rules which are stored in a filter chain, similar to the way iptables stores IP filtering rules for network packets. The virtual filesystem can be accessed through a specified mount point where all files are included and excluded according to the rules found in the filter chain. Rules can be provided with command line parameters or options in the system's fstab file.
 
-FilterFS can be useful in various scenarios where parts of the filesystem needs to be hidden from a user or where filtering files simplifies certain use cases. For example, it can be used to export only certain audio files of a filesystem where additional metadata such as pictures or playlists are stored next to the audio files. This makes it easier to copy whole subtrees with audio files to an MP3 player without filling the player's flash memory with unncessary metadata. In a more enterprise-centric environment, it would be possible to export filtered network shares which only allow storage of specific document types based on predefined file extensions.
+FilterFS can be useful in various scenarios where parts of the filesystem need to be hidden from a user or where filtering files simplifies certain use cases. For example, it can be used to export only certain audio files of a filesystem where additional metadata such as pictures or playlists are stored next to the audio files. This makes it easier to copy whole subtrees with audio files to an MP3 player without filling the player's flash memory with unnecessary metadata. In a more enterprise-centric environment, it would be possible to export filtered network shares which only allow storage of specific document types based on predefined file extensions.
 
 Usage
 -----
 
 Include and exclude filters are specified on the command line or alternatively in the system's fstab file with the following parameters:
 
-  -I <pattern> OR --include=<pattern>
+  -I <pattern> OR --include=<pattern> OR -oinclude=<pattern>
 
-  -X <pattern> OR --exclude=<pattern>
+  -X <pattern> OR --exclude=<pattern> OR -oexclude=<pattern>
 
-It is possible to specify multiple rules at once by separating patterns with colons:
+The -o syntax takes the form of a mount option, which is needed to specify these in the system fstab. In place of any of the <pattern> placeholders above multiple patterns separated by colons can be used, yielding e.g.:
 
-  -I <pattern:pattern:...> OR --include=<pattern:pattern:...>
+  -I <pattern>[:<pattern>[...]] or --exclude=<pattern>[:<pattern>[...]]
 
-  -X <pattern:pattern:...> OR --exclude=<pattern:pattern:...>
-
-The default action for a filterfs filesystem is to exclude all files that cannot be matched by any rule. It is also possible to override this default behaviour and including all unmatched files with the following parameter:
+The default action for a FilterFS filesystem is to exclude all files that cannot be matched by any rule. It is also possible to override this default behaviour and include all unmatched files with the following parameter:
 
   --default-include
 
-The order they are provided on the command line is the ordered how they are added to the filter chain.
+The order that rules are provided on the command line is the same as their order in the filter chain.
 
 The following example shows how to create a filtered filesystem that only allows audio files and playlists::
 
   filterfs /data/audio /data/filtered-audio --include=*.flac:*.mp3:*.m3u:*.m3u8
 
-The following is a more complete example that implements an advanced chain of include and exclude rules::
+The following is a more complex example that implements an advanced chain of include and exclude rules::
 
   filterfs /data/audio /data/filtered-audio --exclude=temporary*.log:*.cue 
   --include=*.log --include=*.flac:*.mp3 --default-include
 
-It is also possible to mount FilterFS filesystems with the system's fstab file. This would require an additional entry in /etc/fstab such as the following::
+It is also possible to mount FilterFS filesystems with the system's fstab file. This would require an entry in /etc/fstab such as the following::
 
   #filterfs#/mnt/audio /mnt/filtered-audio fuse allow_other
   ,exclude=temporary*.log:*.cue,include=*.log:*.flac:*.mp3,default-include  0  0
